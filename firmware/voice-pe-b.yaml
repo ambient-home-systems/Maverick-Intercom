@@ -1,0 +1,14 @@
+packages:
+  intercom: !include voice-pe.yaml
+substitutions:
+  name: maverick-voice-b
+  friendly_name: Maverick Voice B
+  intercom_device_id: voice-b
+maverick_intercom:
+  token: !secret intercom_token_b
+api:
+  encryption:
+    key: !secret api_encryption_key_b
+ota:
+  - id: !extend ota_esphome
+    password: !secret ota_password_b

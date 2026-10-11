@@ -1,0 +1,11 @@
+.venv/
+.local/
+.platformio/
+firmware/.esphome/
+firmware/secrets.yaml
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/

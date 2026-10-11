@@ -1,0 +1,51 @@
+name: Prototype checks
+on:
+  push:
+  pull_request:
+jobs:
+  home-assistant:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.23'
+      - run: bash scripts/bootstrap_ha.sh
+      - run: .local/ha-venv/bin/python -m pytest tests/ha -q
+      - run: .local/ha-venv/bin/python scripts/package_integration.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maverick-intercom-demo
+          path: .local/dist/maverick-intercom-demo.zip
+  software:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: bash scripts/bootstrap.sh
+      - run: .venv/bin/python -m unittest discover -s tests -v
+      - run: g++ -std=c++17 -Wall -Wextra -Werror tests/wire_test.cpp -o .local/wire-test && .local/wire-test
+      - run: .venv/bin/python scripts/check_firmware.py
+  firmware:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .platformio
+            .local/esp-idf
+            .local/idf-component-cache
+            .local/firmware-check/.esphome
+          key: firmware-${{ runner.os }}-${{ hashFiles('requirements-dev.lock', 'firmware/**') }}
+      - run: bash scripts/bootstrap.sh
+      - run: .venv/bin/python scripts/check_firmware.py --compile
+      - if: failure()
+        run: tail -n 100 .local/firmware-check/*.compile.log

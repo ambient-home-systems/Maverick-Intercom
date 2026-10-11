@@ -1,0 +1,6 @@
+prepare:
+  name: Prepare call
+  description: Select the two intercom Assist pipelines. Press each device's button to join within 60 seconds.
+hang_up:
+  name: Hang up
+  description: End both audio directions and restore the previous Assist pipeline selections.

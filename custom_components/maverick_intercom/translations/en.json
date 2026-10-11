@@ -1,0 +1,34 @@
+{
+  "title": "Maverick Intercom",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Choose device A",
+        "description": "Choose four entities from the first stock Voice Preview device. Use its Media Player and first Assistant selector.",
+        "data": {"satellite": "Assist satellite", "player": "Media player", "pipeline": "Assistant selector", "mute": "Mute switch"}
+      },
+      "device_b": {
+        "title": "Choose device B",
+        "description": "Choose the matching entities from the second stock Voice Preview device.",
+        "data": {"satellite": "Assist satellite", "player": "Media player", "pipeline": "Assistant selector", "mute": "Mute switch"}
+      },
+      "network": {
+        "title": "Home Assistant address",
+        "description": "Enter the Home Assistant LAN URL that both devices can reach, including its port. The demo streams incoming call audio from this address.",
+        "data": {"base_url": "Home Assistant LAN URL"}
+      }
+    },
+    "error": {
+      "invalid_device": "Choose existing ESPHome entities of the requested types.",
+      "mixed_devices": "All four entities must belong to the same device.",
+      "not_pipeline_selector": "Choose the first Assistant selector, rather than a wake-word or sensitivity selector.",
+      "same_device": "Choose a different device for the other end of the call.",
+      "invalid_url": "Enter an HTTP or HTTPS URL with a host and optional port, without a path, credentials, or query."
+    },
+    "abort": {"single_instance_allowed": "The demo supports one pair. Remove the existing entry to choose different devices."}
+  },
+  "options": {
+    "step": {"init": {"title": "Home Assistant address", "description": "Changing this address ends any current call.", "data": {"base_url": "Home Assistant LAN URL"}}},
+    "error": {"invalid_url": "Enter an HTTP or HTTPS LAN URL without a path, credentials, or query."}
+  }
+}

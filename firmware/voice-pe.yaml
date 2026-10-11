@@ -1,0 +1,242 @@
+# Experimental overlay on stock Voice PE firmware. Neither device joins by default.
+substitutions:
+  name: maverick-voice-a
+  friendly_name: Maverick Voice A
+  intercom_device_id: voice-a
+
+packages:
+  stock_voice_pe:
+    url: https://github.com/esphome/home-assistant-voice-pe
+    ref: 2644f4c794271d735d182ca7ebf899ed46164f4e # 26.9.0
+    files: [home-assistant-voice.yaml]
+    refresh: never
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+  compile_process_limit: 4
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - id: !extend ota_esphome
+    password: !secret ota_password
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/esphome/home-assistant-voice-pe
+      ref: 2644f4c794271d735d182ca7ebf899ed46164f4e
+    components: [voice_kit]
+    refresh: never
+  - source:
+      type: local
+      path: components
+    components: [maverick_intercom]
+
+# Keep the installed XMOS firmware. The stock package would upgrade it on mismatch.
+voice_kit:
+  firmware: !remove
+
+time:
+  - platform: sntp
+    id: intercom_clock
+
+globals:
+  - id: intercom_owns_audio
+    type: bool
+    initial_value: 'false'
+  - id: intercom_wants_join
+    type: bool
+    initial_value: 'false'
+  - id: intercom_restore_wake_word
+    type: bool
+    initial_value: 'false'
+  - id: intercom_restore_buttons
+    type: bool
+    initial_value: 'false'
+
+# Add an input to the stock mixer without taking over its existing media inputs.
+speaker:
+  - id: !extend mixing_speaker
+    source_speakers:
+      - id: intercom_mixing_input
+        buffer_duration: 40ms
+        timeout: 100ms
+  - platform: resampler
+    id: intercom_speaker
+    output_speaker: intercom_mixing_input
+    sample_rate: 48000
+    buffer_duration: 40ms
+    bits_per_sample: 16
+
+maverick_intercom:
+  id: intercom
+  microphone:
+    microphone: i2s_mics
+    channels: 0
+    bits_per_sample: 16
+    gain_factor: 1
+  speaker: intercom_speaker
+  host: !secret intercom_host
+  device_id: ${intercom_device_id}
+  token: !secret intercom_token
+  ca_certificate: ../.local/server.crt
+  # Assist, media/timer playback, and mute changes take priority over the call.
+  audio_available: !lambda |-
+    return id(intercom_owns_audio) && id(intercom_wants_join) && !id(master_mute_switch).state
+      && !id(hardware_mute_switch).state && !id(va).is_running()
+      && !id(mww).is_running()
+      && id(external_media_player).state != media_player::MEDIA_PLAYER_STATE_ANNOUNCING
+      && id(external_media_player).state != media_player::MEDIA_PLAYER_STATE_PLAYING
+      && !id(timer_ringing).state;
+  on_stopped:
+    - lambda: id(intercom_wants_join) = false;
+    - script.execute: intercom_restore_assist
+
+switch:
+  - platform: template
+    id: intercom_join
+    name: Intercom Lab Join
+    restore_mode: ALWAYS_OFF
+    lambda: return id(intercom_wants_join);
+    turn_on_action:
+      - lambda: id(intercom_wants_join) = true;
+      - script.execute: intercom_acquire_audio
+    turn_off_action:
+      - lambda: id(intercom_wants_join) = false;
+      - lambda: id(intercom).stop();
+
+binary_sensor:
+  - platform: template
+    id: intercom_active
+    name: Intercom Active
+    lambda: return id(intercom).is_active();
+  - id: !extend center_button
+    on_press:
+      - if:
+          condition:
+            lambda: return id(intercom_owns_audio);
+          then:
+            - lambda: id(intercom_wants_join) = false;
+            - lambda: id(intercom).stop();
+
+sensor:
+  - platform: template
+    name: Intercom TX Dropped Frames
+    lambda: return id(intercom).get_tx_dropped();
+    update_interval: 5s
+    entity_category: diagnostic
+  - platform: template
+    name: Intercom RX Dropped Frames
+    lambda: return id(intercom).get_rx_dropped();
+    update_interval: 5s
+    entity_category: diagnostic
+
+script:
+  - id: intercom_acquire_audio
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return !id(intercom_owns_audio) && id(intercom).is_finished()
+                && !id(master_mute_switch).state && !id(hardware_mute_switch).state
+                && !id(va).is_running()
+                && id(external_media_player).state != media_player::MEDIA_PLAYER_STATE_ANNOUNCING
+                && id(external_media_player).state != media_player::MEDIA_PLAYER_STATE_PLAYING
+                && !id(timer_ringing).state;
+          then:
+            - lambda: |-
+                id(intercom_owns_audio) = true;
+                id(intercom_restore_wake_word) = id(mww).is_running();
+                id(intercom_restore_buttons) = id(disable_buttons).state;
+            - switch.turn_on: disable_buttons
+            - micro_wake_word.stop:
+            - wait_until:
+                condition:
+                  lambda: return !id(mww).is_running() && id(i2s_mics).is_stopped();
+                timeout: 3s
+            - if:
+                condition:
+                  lambda: return id(intercom_wants_join) && !id(mww).is_running() && id(i2s_mics).is_stopped();
+                then:
+                  - lambda: id(intercom).start();
+                else:
+                  - script.execute: intercom_restore_assist
+          else:
+            - lambda: id(intercom_wants_join) = false;
+            - logger.log: "Intercom join refused: another audio owner is busy or device is muted"
+  - id: intercom_restore_assist
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: return id(intercom_owns_audio);
+          then:
+            - lambda: id(intercom_wants_join) = false;
+            # Keep the stock multi-click handler from starting Assist on a hang-up click.
+            - wait_until:
+                condition:
+                  lambda: return id(intercom).is_finished() && id(i2s_mics).is_stopped();
+                timeout: 10s
+            - delay: 1s
+            - if:
+                condition:
+                  and:
+                    - lambda: return id(intercom_restore_wake_word);
+                    - lambda: return id(intercom).is_finished() && id(i2s_mics).is_stopped();
+                    - voice_assistant.connected:
+                then:
+                  - micro_wake_word.start:
+            - lambda: |-
+                if (!id(intercom_restore_buttons)) id(disable_buttons).turn_off();
+                id(intercom_owns_audio) = false;
+            - script.execute: control_leds
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: return id(intercom).is_requested();
+          then:
+            - light.turn_on:
+                id: voice_assistant_leds
+                effect: none
+                brightness: 50%
+                red: !lambda 'return id(intercom).is_active() ? 0.0f : 1.0f;'
+                green: !lambda 'return id(intercom).is_active() ? 1.0f : 0.5f;'
+                blue: !lambda 'return id(intercom).is_active() ? 1.0f : 0.0f;'
+
+# Preserve stock initialization, but finish the call before reconnecting Assist.
+voice_assistant:
+  on_client_connected:
+    # A mapping replaces the stock action list during ESPHome package merging.
+    then:
+      - lambda: id(intercom_wants_join) = false;
+      - lambda: id(intercom).stop();
+      - wait_until:
+          condition:
+            lambda: return id(intercom).is_finished() && !id(intercom_owns_audio);
+          timeout: 10s
+      - if:
+          condition:
+            lambda: return id(intercom).is_finished() && !id(intercom_owns_audio);
+          then:
+            - lambda: id(init_in_progress) = false;
+            - micro_wake_word.start:
+            - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+            - script.execute: control_leds
+          else:
+            - logger.log: "Assist reconnect deferred because intercom audio cleanup did not complete"
+  on_client_disconnected:
+    - lambda: id(intercom_wants_join) = false;
+    - lambda: id(intercom).stop();
