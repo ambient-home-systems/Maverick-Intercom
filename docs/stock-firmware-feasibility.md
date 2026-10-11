@@ -42,7 +42,7 @@ the ESPHome integration or attaching a competing voice client. The provider is
 using a speech-input interface for intercom audio; this is an experimental use
 of that interface. Integration loading, generated pipelines, capture across
 20 seconds of audio samples including silence, empty-text termination without
-intents/TTS, HTTP routing, and recovery pass tests against HA 2026.10.1.
+intents/TTS, HTTP routing, and recovery pass tests against HA 2026.10.0.
 Compatibility with physical stock devices remains unverified.
 
 ## What the source review establishes
@@ -69,9 +69,10 @@ Compatibility with physical stock devices remains unverified.
   measurement of playback delay.
 
 The review used ESPHome 2026.9.1 and upstream development sources, then verified
-the speech-input settings and pipeline behavior in the latest stable HA 2026.10.1
-and microphone/media-player configuration in Voice Preview 26.9.0 on 2026-10-11.
-The user reports running the latest versions of both. Record the exact installed
+the speech-input settings and pipeline behavior in HA 2026.10.1
+and microphone/media-player configuration in Voice Preview 26.9.0. The user later
+confirmed Core 2026.10.0; all 24 HA integration tests pass on that exact release,
+and it is the installation minimum and pinned development baseline. Record the exact installed
 versions in the physical test worksheet so results remain reproducible.
 
 ## Alternatives and maintenance
@@ -110,7 +111,7 @@ insufficient to establish a working stock-firmware intercom.
 
 - [Stock Voice Preview 26.9.0 configuration](https://github.com/esphome/home-assistant-voice-pe/blob/26.9.0/home-assistant-voice.yaml)
 - [ESPHome 2026.9.1 voice state machine and subscription ownership](https://github.com/esphome/esphome/blob/2026.9.1/esphome/components/voice_assistant/voice_assistant.cpp)
-- [Home Assistant 2026.10.1 speech-input processing settings](https://github.com/home-assistant/core/blob/2026.10.1/homeassistant/components/stt/models.py)
-- [Home Assistant 2026.10.1 pipeline handling of external VAD](https://github.com/home-assistant/core/blob/2026.10.1/homeassistant/components/assist_pipeline/default_pipeline.py)
+- [Home Assistant 2026.10.0 speech-input processing settings](https://github.com/home-assistant/core/blob/2026.10.0/homeassistant/components/stt/models.py)
+- [Home Assistant 2026.10.0 pipeline handling of external VAD](https://github.com/home-assistant/core/blob/2026.10.0/homeassistant/components/assist_pipeline/default_pipeline.py)
 - [Home Assistant ESPHome satellite audio handling](https://github.com/home-assistant/core/blob/dev/homeassistant/components/esphome/assist_satellite.py)
 - [Home Assistant start-conversation requirements](https://github.com/home-assistant/core/blob/dev/homeassistant/components/assist_satellite/entity.py)

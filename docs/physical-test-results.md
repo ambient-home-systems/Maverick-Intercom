@@ -6,7 +6,7 @@ environment has no connection to their microphone, speaker, or Home Assistant.
 Record the following for each test session:
 
 Preferred test path: **stock firmware with the HA intercom integration demo**.
-The integration is implemented and software-tested on HA 2026.10.1; follow
+The integration is implemented and software-tested on HA 2026.10.0; follow
 [the installation guide](integration-demo.md). Record whether a session uses
 this path or the optional custom firmware lab, and record the exact Home
 Assistant Core version. All physical results below are still pending.

@@ -10,7 +10,7 @@ with explicit joins and restoration of normal Assist selections after a call.
 The goal is a natural, full-duplex room-to-room conversation.
 
 The installable demo is implemented and software-tested on Home Assistant
-**2026.10.1**, using the source interfaces in Voice Preview **26.9.0**.
+**2026.10.0**, using the source interfaces in Voice Preview **26.9.0**.
 Actual stock-device playback, echo cancellation, and acoustic latency still need
 physical testing. The earlier custom firmware and standalone relay remain optional
 lab experiments. See [the architecture notes](docs/stock-firmware-feasibility.md)
@@ -58,7 +58,7 @@ restoration of a device's existing Assist behavior.
 | Bounded queues, frame sequencing, disconnect handling | Passed software tests |
 | Experimental Voice PE firmware overlay and ESPHome external component | Both configurations validate and full ESP32 builds pass |
 | Preserve Assist outside calls in the firmware prototype | Implemented; physical validation pending |
-| Stock-firmware HA integration, setup UI, call controls, streaming WAV | Implemented; 24 tests pass against real HA 2026.10.1 |
+| Stock-firmware HA integration, setup UI, call controls, streaming WAV | Implemented; 24 tests pass against real HA 2026.10.0 |
 | HA pipeline lifetime, cancellation, mute, bounded audio, restoration/recovery | Passed software tests; physical validation pending |
 | Real conversation, echo, simultaneous speech, latency, recovery | Pending two-device testing |
 | Integration install ZIP and installation guide | Available; CI packaging configured, cloud checks run locally |
@@ -94,7 +94,7 @@ and speaker buffering must be measured before making any latency claim.
 Use the existing checkout; cloud tasks are already isolated and do not need a
 separate Git worktree.
 
-The integration tests require Python 3.14.2+ for HA 2026.10.1. Install `uv`; the
+The integration tests require Python 3.14.2+ for HA 2026.10.0. Install `uv`; the
 bootstrap script creates a separate workspace environment with pinned dependencies:
 
 ```bash
@@ -292,6 +292,11 @@ open until those checks pass.
 - **GitHub installation:** Added Home Assistant buttons for adding the repository
   to HACS and opening the integration setup. Documented HACS installation, restart,
   and a GitHub ZIP fallback for testing with stock devices.
+- **2026-10-11 (installation compatibility):** The user's Core version is
+  2026.10.0. Verified all 24 HA tests on that exact version, lowered the HACS
+  minimum from 2026.10.1 to 2026.10.0, and pinned the development environment to
+  2026.10.0 so CI tests the minimum supported release. Integration version is
+  0.2.1. A Home Assistant patch upgrade is not required to install this demo.
 
 ## Cloud build network access
 

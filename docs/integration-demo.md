@@ -2,8 +2,9 @@
 
 This custom Home Assistant integration uses **stock Voice Preview firmware**.
 It provides an explicit two-device call demo. The software is tested against
-Home Assistant Core **2026.10.1** and the source interfaces in Voice Preview
+Home Assistant Core **2026.10.0** and the source interfaces in Voice Preview
 **26.9.0**. Audio quality and actual device playback are not physically validated.
+The HACS minimum is **2026.10.0**; installation does not require 2026.10.1.
 
 ## Install with HACS
 

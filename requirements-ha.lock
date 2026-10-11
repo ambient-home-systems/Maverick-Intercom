@@ -58,9 +58,9 @@ habluetooth==7.1.2
 hass-nabucasa==2.7.0
 hassil==3.12.1
 home-assistant-bluetooth==2.0.0
-home-assistant-frontend==20260930.3
+home-assistant-frontend==20260930.2
 home-assistant-intents==2026.10.6
-homeassistant==2026.10.1
+homeassistant==2026.10.0
 httpcore==1.0.9
 httpx==0.28.1
 icmplib==3.0.4
